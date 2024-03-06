@@ -40,17 +40,20 @@ class ColorizationDataset(Dataset):
 
         return gray_image, colorful_image
     
-    
+
 model = ECCVGenerator()
 criterion = nn.MSELoss()
 
-train_dataset = ColorizationDataset(root_folder=train_folder, transform=your_transform)
-train_loader = DataLoader(train_dataset, batch_size=batch_size, shuffle=True)
+train_dataset = ColorizationDataset(root_folder="./train")
+train_loader = DataLoader(train_dataset, batch_size=30, shuffle=True)
 
-val_dataset = ColorizationDataset(root_folder=val_folder, transform=your_transform)
-val_loader = DataLoader(val_dataset, batch_size=batch_size, shuffle=False)
+# val_dataset = ColorizationDataset(root_folder=val_folder)
+# val_loader = DataLoader(val_dataset, batch_size=30, shuffle=False)
 
+import torch.optim as optim
 num_epochs = 10
+log_interval = 10  # Print the training loss every 10 batches
+optimizer = optim.Adam(model.parameters()) #, lr=0.001)
 
 for epoch in range(num_epochs):
     model.train()
@@ -66,3 +69,4 @@ for epoch in range(num_epochs):
             print(f"Epoch {epoch}, Batch {batch_idx}, Loss: {loss.item()}")
 
     # Optionally, evaluate the model on the validation set after each epoch
+torch.save(model.state_dict(), 'custom_trained_model.pth')
