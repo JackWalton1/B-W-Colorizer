@@ -1,6 +1,5 @@
 import argparse
 import matplotlib.pyplot as plt
-#comment to test push
 from colorizers import *
 
 parser = argparse.ArgumentParser()
