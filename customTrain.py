@@ -1,21 +1,18 @@
-import torch
-from torch.utils.data import Dataset, DataLoader
-from torchvision import transforms
-from PIL import Image
-# import argparse
-import matplotlib.pyplot as plt
 from colorizers import *
 from utils import *
-'''TODO: make this file train on the gray images (train_input), and colored images (train_output) '''
 
 import torch
-from torch.utils.data import Dataset
+from torch.utils.data import Dataset, DataLoader
 from torchvision import transforms
 from PIL import Image
 import os
 import torch.optim as optim
 from torch.nn.functional import interpolate, mse_loss
 from torchvision.transforms import Grayscale
+import numpy as np
+from skimage import color
+import matplotlib.pyplot as plt
+import numpy as np
 
 class ColorizationDataset(Dataset):
     def __init__(self, root_folder, transform=None):
@@ -39,9 +36,14 @@ class ColorizationDataset(Dataset):
 
         if self.transform:
             gray_image = self.transform(gray_image)
-            colorful_image = self.transform(colorful_image)
 
-        return gray_image, colorful_image
+            # Convert colorful image to Lab color space
+            colorful_lab = color.rgb2lab(colorful_image)
+            # Extract 'a' and 'b' channels
+            ab_channels = colorful_lab[:, :, 1:]
+
+        return gray_image, ab_channels
+
     
 def custom_collate(batch, target_size=(250, 250)):
     inputs, targets = zip(*batch)
@@ -76,7 +78,6 @@ train_loader = DataLoader(train_dataset, batch_size=30, shuffle=True, collate_fn
 # val_dataset = ColorizationDataset(root_folder=val_folder)
 # val_loader = DataLoader(val_dataset, batch_size=30, shuffle=False)
 
-import torch.optim as optim
 num_epochs = 10
 log_interval = 10  # Print the training loss every 10 batches
 optimizer = optim.Adam(model.parameters()) #, lr=0.001)
@@ -96,7 +97,8 @@ for epoch in range(num_epochs):
         # Select one channel to simulate a grayscale image
         outputs_resized_grayscale = outputs_resized[:, 0, :, :].unsqueeze(1)
 
-        loss = mse_loss(outputs_resized_grayscale, targets)
+        loss = mse_loss(outputs_resized_grayscale.float(), targets.float())
+
         loss.backward()
         optimizer.step()
 
